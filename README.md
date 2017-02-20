@@ -12,7 +12,9 @@ The only possible exceptions are ClassCastExceptions and
 NullPointerExceptions. If any of these are thrown, assumptions about the
 given JSON structure were wrong.
 
-Not thread-safe.
+Not thread-safe. Requires Java 8.
+
+## Example Usage
 
 ```
 import static de.mobilcom.jsom.Jsom.*;
@@ -68,6 +70,8 @@ Jsom awesome = todo.stream()
 todo.stream().forEach(item -> $(item).put("done", true));
 ```
 
+## Parse and stringify
+
 JSOM does not contain a parser or stringifier.
 [Jackson](https://github.com/FasterXML/jackson) is recommended:
 
@@ -81,6 +85,33 @@ final TypeReference<HashMap<String, Object>> MAP_TYPE_REF
         = new TypeReference<HashMap<String, Object>>() {
 };
 
+// parse
 Jsom in = $(objectMapper.readValue("{\"hello\":\"world\"}", MAP_TYPE_REF));
+
+// stringify
 String out = objectMapper.writeValueAsString(valueOf(in));
+```
+
+## Installation
+
+Using Maven and JitPack:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- ... --->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+	    <groupId>com.github.mobilcom-debitel</groupId>
+	    <artifactId>jsom</artifactId>
+	    <version>master-SNAPSHOT</version>
+	</dependency>
+    </dependencies>
+</project>
 ```
