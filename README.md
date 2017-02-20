@@ -108,10 +108,10 @@ Using Maven and JitPack:
     </repositories>
     <dependencies>
         <dependency>
-	    <groupId>com.github.mobilcom-debitel</groupId>
-	    <artifactId>jsom</artifactId>
-	    <version>master-SNAPSHOT</version>
-	</dependency>
+            <groupId>com.github.mobilcom-debitel</groupId>
+            <artifactId>jsom</artifactId>
+            <version>master-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>
 ```
