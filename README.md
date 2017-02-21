@@ -15,7 +15,7 @@ Not thread-safe. Requires Java 8.
 
 ## Example Usage
 
-```
+```java
 import static de.mobilcom.jsom.Jsom.*;
 
 // Create JSON views of existing Maps or Lists
@@ -74,7 +74,7 @@ todo.stream().forEach(item -> item.put("done", true));
 JSOM does not contain a parser or stringifier.
 [Jackson](https://github.com/FasterXML/jackson) is recommended:
 
-```
+```java
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static de.mobilcom.util.Jsom.*;
