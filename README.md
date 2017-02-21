@@ -4,8 +4,7 @@ Fluent, Java-style JSON view with all important methods from Map and List.
 
 Works on arbitrary structures of Map<String, Object>, List<Object>, String,
 Number, Boolean, and null. Functional methods (forEach etc.) have been
-omitted in favor of Streams. You should not "store" Jsom instances. Use them
-as a temporary access layer. Object insertion methods always unwrap Jsom
+omitted in favor of Streams. Object insertion methods always unwrap Jsom
 instances before inserting them.
 
 The only possible exceptions are ClassCastExceptions and
