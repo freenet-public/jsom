@@ -27,6 +27,10 @@ public class JsomTest extends TestCase {
         assertTrue(test.get("arrayz").isNull());
         assertEquals(3, list(1, 2, 3).get(2).toInt());
     }
+    
+    public void testValues() {
+        test.values().toList();
+    }
 
     public void testReadme() {
 
@@ -47,29 +51,29 @@ public class JsomTest extends TestCase {
 
         // Count things to do
         long count = todo.stream()
-                .filter(item -> !$(item).get("done").toBoolean())
+                .filter(item -> !item.get("done").toBoolean())
                 .count();
         assertEquals(2, count);
 
         // Get maximum year
         int year = todo.stream()
-                .filter(item -> !$(item).get("done").toBoolean())
-                .mapToInt(item -> $(item).get("year").toInt())
+                .filter(item -> !item.get("done").toBoolean())
+                .mapToInt(item -> item.get("year").toInt())
                 .max()
                 .getAsInt();
         assertEquals(2017, year);
 
         // Find item containing awesomeness using a custom filter
-        Jsom awesome = $(todo.stream()
-                .filter(item -> $(item).get("title").toString().contains("awesome"))
+        Jsom awesome = todo.stream()
+                .filter(item -> item.get("title").toString().contains("awesome"))
                 .findFirst()
-                .get());
+                .get();
         assertEquals(valueOf(todo.get(2)), valueOf(awesome));
 
         // Check everything
-        todo.stream().forEach(item -> $(item).put("done", true));
+        todo.stream().forEach(item -> item.put("done", true));
         todo.stream()
-                .map(item -> $(item).get("done").toBoolean())
+                .map(item -> item.get("done").toBoolean())
                 .forEach(JsomTest::assertTrue);
 
     }

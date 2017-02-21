@@ -17,7 +17,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -180,6 +179,14 @@ public class Jsom {
     }
 
     /**
+     * @param elements
+     * @return
+     */
+    public Jsom addAll(Jsom elements) {
+        return addAll(elements.toList());
+    }
+
+    /**
      * @param index
      * @param elements
      * @return
@@ -190,6 +197,15 @@ public class Jsom {
             asList.add(index++, valueOf(element));
         }
         return this;
+    }
+
+    /**
+     * @param index
+     * @param elements
+     * @return
+     */
+    public Jsom addAll(int index, Jsom elements) {
+        return addAll(index, elements.toList());
     }
 
     /**
@@ -220,6 +236,14 @@ public class Jsom {
      */
     public boolean containsAll(Collection<Object> collection) {
         return collection.stream().noneMatch((element) -> (!toList().contains(valueOf(element))));
+    }
+
+    /**
+     * @param collection
+     * @return
+     */
+    public boolean containsAll(Jsom collection) {
+        return containsAll(collection.toList());
     }
 
     /**
@@ -329,6 +353,17 @@ public class Jsom {
     }
 
     /**
+     * Insert all entries from another map.
+     *
+     * @see Map#putAll(Map)
+     * @param map
+     * @return self
+     */
+    public Jsom putAll(Jsom map) {
+        return putAll(map.toMap());
+    }
+
+    /**
      * Insert value at key unless key exists.
      *
      * @see Map#putIfAbsent(Object, Object)
@@ -353,6 +388,16 @@ public class Jsom {
             asMap.putIfAbsent(entry.getKey(), valueOf(entry.getValue()));
         });
         return this;
+    }
+
+    /**
+     * Insert all entries from another map unless the respective keys exist.
+     *
+     * @param map
+     * @return self
+     */
+    public Jsom putAllIfAbsent(Jsom map) {
+        return putAllIfAbsent(map.toMap());
     }
 
     /**
@@ -513,7 +558,7 @@ public class Jsom {
      * @return
      */
     public Jsom values() {
-        return $(toMap().values());
+        return $(Arrays.asList(toMap().values().toArray()));
     }
 
     /**
@@ -521,8 +566,8 @@ public class Jsom {
      *
      * @return
      */
-    public Stream<Object> stream() {
-        return toList().stream();
+    public Stream<Jsom> stream() {
+        return toList().stream().map(Jsom::$);
     }
 
     /**
@@ -530,8 +575,8 @@ public class Jsom {
      *
      * @return
      */
-    public Stream<Object> parallelStream() {
-        return toList().parallelStream();
+    public Stream<Jsom> parallelStream() {
+        return toList().parallelStream().map(Jsom::$);
     }
 
     /**
@@ -539,8 +584,8 @@ public class Jsom {
      *
      * @return
      */
-    public Stream<Entry<String, Object>> entryStream() {
-        return toMap().entrySet().stream();
+    public Stream<Entry<String, Jsom>> entryStream() {
+        return toMap().entrySet().stream().map(e -> new SimpleEntry<>(e.getKey(), $(e.getValue())));
     }
 
     /**
@@ -548,8 +593,8 @@ public class Jsom {
      *
      * @return
      */
-    public Stream<Entry<String, Object>> parallelEntryStream() {
-        return toMap().entrySet().parallelStream();
+    public Stream<Entry<String, Jsom>> parallelEntryStream() {
+        return toMap().entrySet().parallelStream().map(e -> new SimpleEntry<>(e.getKey(), $(e.getValue())));
     }
 
     /**
@@ -601,7 +646,7 @@ public class Jsom {
      * @param value
      * @return
      */
-    public final static Jsom deepClone(Object value) {
+    public static Jsom deepClone(Object value) {
         value = valueOf(value);
         if (value instanceof Object[]) {
             value = Arrays.asList((Object[]) value);
@@ -610,7 +655,7 @@ public class Jsom {
         if (json.isList()) {
             return $(json.stream().map(Jsom::deepClone).collect(TO_LIST));
         } else if (json.isMap()) {
-            return $(json.entryStream().map(Jsom::deepClone).collect(TO_MAP));
+            return $(json.entryStream().map(Jsom::deepCloneEntry).collect(TO_MAP));
         }
         return json;
     }
@@ -621,7 +666,7 @@ public class Jsom {
      * @param entry
      * @return
      */
-    public final static Entry<String, Object> deepClone(Entry<String, Object> entry) {
+    protected static Entry<String, Object> deepCloneEntry(Entry<String, Jsom> entry) {
         return new SimpleEntry<>(entry.getKey(), deepClone(entry.getValue()));
     }
 
@@ -689,45 +734,69 @@ public class Jsom {
     /**
      * A collector that generates Maps (HashMap) from entry streams.
      */
-    public final static Collector<Entry<String, Object>, ?, Map<String, Object>> TO_MAP
-            = Collectors.toMap(Entry::getKey,
-                    e -> valueOf(e.getValue()),
-                    (Object a, Object b) -> b,
-                    HashMap::new
-            );
+    public final static Collector<Entry<String, Object>, ?, Jsom> TO_MAP
+            = new MapCollector();
 
     /**
      * A collector that generates Lists (ArrayList) from object streams.
      */
-    public final static Collector<Object, ?, List<Object>> TO_LIST
-            = new ArrayListCollector();
+    public final static Collector<Object, ?, Jsom> TO_LIST
+            = new ListCollector();
 
-    /**
-     * Extra class required because Collectors.toCollection( ArrayList::new )
-     * does not allow valueOf()
-     */
-    private static class ArrayListCollector implements Collector<Object, List<Object>, List<Object>> {
+    protected static class MapCollector implements Collector<Entry<String, Object>, Jsom, Jsom> {
 
         @Override
-        public Supplier<List<Object>> supplier() {
-            return ArrayList::new;
+        public Supplier<Jsom> supplier() {
+            return Jsom::map;
         }
 
         @Override
-        public BiConsumer<List<Object>, Object> accumulator() {
-            return (list, value) -> list.add(valueOf(value));
+        public BiConsumer<Jsom, Entry<String, Object>> accumulator() {
+            return (map, entry) -> map.put(entry.getKey(), entry.getValue());
         }
 
         @Override
-        public BinaryOperator<List<Object>> combiner() {
+        public BinaryOperator<Jsom> combiner() {
             return (a, b) -> {
-                a.addAll(b);
+                a.putAll(b.toMap());
                 return a;
             };
         }
 
         @Override
-        public Function<List<Object>, List<Object>> finisher() {
+        public Function<Jsom, Jsom> finisher() {
+            return map -> map;
+        }
+
+        @Override
+        public Set<Collector.Characteristics> characteristics() {
+            return CHARACTERISTICS;
+        }
+
+    }
+
+    protected static class ListCollector implements Collector<Object, Jsom, Jsom> {
+
+        @Override
+        public Supplier<Jsom> supplier() {
+            return Jsom::list;
+        }
+
+        @Override
+        public BiConsumer<Jsom, Object> accumulator() {
+            return (list, value) -> list.add(value);
+        }
+
+        @Override
+        public BinaryOperator<Jsom> combiner() {
+            return (a, b) -> {
+                a.addAll(b.toList());
+                return a;
+            };
+        }
+
+        @Override
+        public Function<Jsom, Jsom> finisher() {
             return list -> list;
         }
 
@@ -736,9 +805,9 @@ public class Jsom {
             return CHARACTERISTICS;
         }
 
-        private final static Set<Collector.Characteristics> CHARACTERISTICS
-                = Collections.unmodifiableSet(EnumSet.of(Collector.Characteristics.IDENTITY_FINISH));
-
     }
+
+    protected final static Set<Collector.Characteristics> CHARACTERISTICS
+            = Collections.unmodifiableSet(EnumSet.of(Collector.Characteristics.IDENTITY_FINISH));
 
 };

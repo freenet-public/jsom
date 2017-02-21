@@ -50,24 +50,24 @@ Jsom todo = list(
 
 // Count things to do using at() operation on list stream (sl)
 assertEquals(2, todo.stream()
-        .filter(item -> !$(item).get("done").toBoolean())
+        .filter(item -> !item.get("done").toBoolean())
         .count());
 
 // Get maximum year
 int year = todo.stream()
-        .filter(item -> !$(item).get("done").toBoolean())
-        .mapToInt(item -> $(item).get("year").toInt())
+        .filter(item -> !item.get("done").toBoolean())
+        .mapToInt(item -> item.get("year").toInt())
         .max()
         .getAsInt();
 
 // Find item containing awesomeness using a custom filter
 Jsom awesome = todo.stream()
-        .filter(item -> $(item).get("title").toString().contains("awesome"))
+        .filter(item -> item.get("title").toString().contains("awesome"))
         .findFirst()
         .get();
 
 // Check everything
-todo.stream().forEach(item -> $(item).put("done", true));
+todo.stream().forEach(item -> item.put("done", true));
 ```
 
 ## Parse and stringify
